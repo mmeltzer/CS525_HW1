@@ -38,15 +38,11 @@ void initStorageManager (void) {
 
 	/* 1, create a block in memory, containing the size of meta data and 1 page. In this case
 	we only put the information of number of pages into meta data section.
-
 	   2, set the content of this area in memory to be 0.
-
 	   3, set the first 50 bytes to be the area exclusively containing the information of number of pages. The
 	number of pages in this case is 1. So we store "1" as a string in this 50 bytes area.
-
 	   4, we write this memory block into harddirve with fwrite(), with target area fp, where fp points to the 
 	file that we've created just now.
-
 	   5, at last, we free the memory and the memory we've used and close the FILE pointer.
 	*/
 
@@ -83,24 +79,16 @@ RC createPageFile (char *fileName) {
 
 
 	/* 1, When openning a file, we only need to know the meta data secton from the area that stores the file.
-
 	   2, we open the file first, by fopen().
-
 	   3, then malloc a piece of memory for the meta data stored in harddrive.
-
 	   4, then we read the meta data from hard drive to this piece of memory, with fread().
-
 	   5, because we've stored the number information in string format in harddrive,  we need to create a temperory string 
 	to hold the information when reading it back. So, we use memcpy() to copy this information from memory to this string. 
 	That is because at this point the informatio has already been read from HardDrive to memory.
-
 	   6, Then, we have to convert this information from str to integer.
-
 	   7, With this information, coping with filename, current page(default 0), we fill up the passed filehandle.
-
 	   8, however, we also need to fill the 'void *mgmtInfo'. To do that, we first create an object with SM_mgmtInfo. Then let
 	the item *fp inside this SM_mgmtInfo object point to fp which is the pointer to the file stored in harddrive.
-
 	   9, at last, we let SM_mgmtInfo point to 'void *mgmtInfo' in the filehandle (struct SM_FileHandle).
 	*/
 
@@ -152,7 +140,6 @@ RC openPageFile (char *fileName, SM_FileHandle *fHandle) {
 
 /* 
 	Simply close the file
-
 */
 RC closePageFile (SM_FileHandle *fHandle) {
 
@@ -165,7 +152,6 @@ RC closePageFile (SM_FileHandle *fHandle) {
 
 /* 
 	Simply remove the file
-
 */
 
 RC destroyPageFile (char *fileName) {
@@ -193,3 +179,5 @@ RC appendEmptyBlock (SM_FileHandle *fHandle);
 RC ensureCapacity (int numberOfPages, SM_FileHandle *fHandle);
 
 #endif
+Contact GitHub API Training Shop Blog About
+© 2016 GitHub, Inc. Terms Privacy Security Status Help
