@@ -207,6 +207,7 @@ RC readBlock (int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage) {
 
 	close(fp);
 
+	return RC_OK;	
 
 }
 
@@ -218,10 +219,11 @@ int getBlockPos (SM_FileHandle *fHandle){
 
 
 RC readFirstBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
-	fHandle.curPagePos=0;
+	fHandle->curPagePos=0;
 
 	readBlock(fHandle->curPagePos, fHandle, memPage);
 
+	return RC_OK;	
 }
 
 
@@ -236,6 +238,7 @@ RC readPreviousBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 
 	readBlock(fHandle->curPagePos, fHandle, memPage);
 
+	return RC_OK;	
 
 }
 
@@ -244,6 +247,7 @@ RC readCurrentBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 
 	readBlock(fHandle->curPagePos, fHandle, memPage);
 
+	return RC_OK;	
 }
 
 
@@ -257,22 +261,104 @@ RC readNextBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 	fHandle->curPagePos++;
 
 	readBlock(fHandle->curPagePos, fHandle, memPage);
+
+	return RC_OK;	
 }
 
 
 
 RC readLastBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 
-	fHandle.curPagePos=fHandle->totalNumPages-1;
+	fHandle->curPagePos=fHandle->totalNumPages-1;
 
 	readBlock(fHandle->curPagePos, fHandle, memPage);
+
+	return RC_OK;	
 
 }
 
 /* writing blocks to a page file */
-RC writeBlock (int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage);
-RC writeCurrentBlock (SM_FileHandle *fHandle, SM_PageHandle memPage);
-RC appendEmptyBlock (SM_FileHandle *fHandle);
-RC ensureCapacity (int numberOfPages, SM_FileHandle *fHandle);
+RC writeBlock (int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage){
+
+	FILE *fp;
+
+	SM_mgmtInfo *recieveInfo=(SM_mgmtInfo *)malloc(sizeof(SM_mgmtInfo));
+
+	recieveInfo=fHandle->mgmtInfo;
+
+	fp=recieveInfo->fp;
+
+	offset=META_SIZE+pageNum*PAGESIZE;
+
+	fseek(fp, offset, SEEK_SET);
+
+	fwrite(memPage, 1, PAGESIZE, fp);
+
+	return RC_OK;	
+}
+
+
+RC writeCurrentBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
+
+	writeBlock(fHandle->curPagePos, fHandle, memPage);
+
+	return RC_OK;
+
+}
+
+
+RC appendEmptyBlock (SM_FileHandle *fHandle){
+
+	char *newpage=(char *)malloc(PAGESIZE);
+
+	memset(newpage, '\0', PAGESIZE);
+
+	FILE *fp;
+
+	SM_mgmtInfo *recieveInfo=(SM_mgmtInfo *)malloc(sizeof(SM_mgmtInfo));
+
+	recieveInfo=fHandle->mgmtInfo;
+
+	fp=recieveInfo->fp;
+
+	offset=META_SIZE+fHandle->totalNumPages*PAGESIZE;
+
+	fseek(fp, offset, SEEK_SET);
+
+	fwrite(newpage, 1, PAGESIZE, fp);
+
+	free(newpage);
+
+	return RC_OK;
+}
+
+
+
+RC ensureCapacity (int numberOfPages, SM_FileHandle *fHandle){
+
+	FILE *fp;
+
+	SM_mgmtInfo *recieveInfo=(SM_mgmtInfo *)malloc(sizeof(SM_mgmtInfo));
+
+	recieveInfo=fHandle->mgmtInfo;
+
+	fp=recieveInfo->fp;
+
+	int totalPage=fHandle->totalNumPages;
+
+	int diff=numberOfPages-totalPage;
+
+	if(diff<0)
+	{
+		return RC_OK;
+	}
+
+	for (i=0;i<diff;i++) {
+		appendEmptyBlock(fHandle);
+	}
+
+	return RC_OK;
+
+}
 
 #endif
