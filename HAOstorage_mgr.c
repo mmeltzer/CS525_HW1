@@ -200,8 +200,12 @@ RC readBlock (int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage) {
 	//set the offset before reading
 	fseek(fp, META_SIZE+curPage*PAGESIZE, SEEK_SET);
 
-	//read the content inton memory
-	fread(memPage, 1, pageNum*PAGESIZE, fp);
+	//read the content into memory
+	fread(memPage, 1, PAGESIZE, fp);
+
+	free(recieveInfo);
+
+	close(fp);
 
 
 }
@@ -216,7 +220,7 @@ int getBlockPos (SM_FileHandle *fHandle){
 RC readFirstBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 	fHandle.curPagePos=0;
 
-	readBlock(1, fHandle, memPage);
+	readBlock(fHandle->curPagePos, fHandle, memPage);
 
 }
 
@@ -228,9 +232,9 @@ RC readPreviousBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 	}
 
 
-	fHandle.curPagePos--;
+	fHandle->curPagePos--;
 
-	readBlock(1, fHandle, memPage);
+	readBlock(fHandle->curPagePos, fHandle, memPage);
 
 
 }
@@ -238,7 +242,7 @@ RC readPreviousBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 
 RC readCurrentBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 
-	readBlock(1, fHandle, memPage);
+	readBlock(fHandle->curPagePos, fHandle, memPage);
 
 }
 
@@ -246,22 +250,22 @@ RC readCurrentBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 RC readNextBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 
 
-	if(fHandle.curPagePos=fHandle.totalNumPages-1){
+	if(fHandle.curPagePos->fHandle.totalNumPages-1){
 		return RC_READ_NON_EXISTING_PAGE;
 	}
 
-	fHandle.curPagePos++;
+	fHandle->curPagePos++;
 
-	readBlock(1, fHandle, memPage);
+	readBlock(fHandle->curPagePos, fHandle, memPage);
 }
 
 
 
 RC readLastBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 
-	fHandle.curPagePos=fHandle.totalNumPages-1;
+	fHandle.curPagePos=fHandle->totalNumPages-1;
 
-	readBlock(1, fHandle, memPage);
+	readBlock(fHandle->curPagePos, fHandle, memPage);
 
 }
 
