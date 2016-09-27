@@ -4,6 +4,7 @@ File list: dberror.c, dberror.h, makefile. storage_mgr.c, storage_mgr.h, test_as
 
 Installation: Go to the path where the files are present, then enter the following command: make -f makefile
 
+Main Data Structure: SM_mgmtinfo is an additional structure that we created which contains a pointer to the file pointer *fp
 
 The main objectives of our solution are to create a file, open a file, read the file, and write the file. Files are created
 using the createPageFile() method after the storage manager has been initialized. In this method, a file pointer object
