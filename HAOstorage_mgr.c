@@ -56,11 +56,11 @@ RC createPageFile (char *fileName) {
 	FILE *fp;
 	
 	//create a binary File object
-	fp=fopen(fileName, 'ab+'); //when manipulating passing string by pointer, use the name directly
+	fp=fopen(fileName, "ab+"); //when manipulating passing string by pointer, use the name directly
 
 	//malloc memory
-	char *multipages=(char *)malloc(META_SIZE+PAGESIZE); // malloc returns void *
-	memset(multipages, '\0', META_SIZE+PAGESIZE);
+	char *multipages=(char *)malloc(META_SIZE+PAGE_SIZE); // malloc returns void *
+	memset(multipages, '\0', META_SIZE+PAGE_SIZE);
 	
 	//create a string, give it a value, and copy this string into memory
 	char str[50] = {'\0'};
@@ -68,7 +68,7 @@ RC createPageFile (char *fileName) {
 	memcpy(multipages, str, 50);
 	
 	//fwrite() 
-	fwrite(multipages, 1, META_SIZE+PAGESIZE, fp);
+	fwrite(multipages, 1, META_SIZE+PAGE_SIZE, fp);
 	
 	//free memory
 	free(multipages);
@@ -110,21 +110,20 @@ RC createPageFile (char *fileName) {
 RC openPageFile (char *fileName, SM_FileHandle *fHandle) {
 	
 	//declare a File object
-	File *fp;
+	FILE *fp;
 	
 	//open a File object
-	if(fopen(fileName, 'r+')==NULL)
+	fp=fopen(fileName, "r+");
+	if(fp==NULL)
 	{
 		return RC_FILE_NOT_FOUND;
 	}
-
-	fp=fopen(fileName, 'r+');
 	
 	//malloc memory 
 	char *metapage=(char *)malloc(META_SIZE);
 	
 	//read meta data to the malloced memory
-	fread(metapage, 1, META_SIZE, fp)
+	fread(metapage, 1, META_SIZE, fp);
 	
 	//create a string, read the information from memory to this string
 	char str[50] = {'\0'};
@@ -156,7 +155,14 @@ RC openPageFile (char *fileName, SM_FileHandle *fHandle) {
 */
 RC closePageFile (SM_FileHandle *fHandle) {
 
-	fclose(fHandle->fileName);
+	FILE *fp;
+
+	SM_mgmtInfo *recieveInfo;
+	recieveInfo=fHandle->mgmtInfo;
+
+	fp=recieveInfo->fp;
+
+	fclose(fp);
 
 
 	return RC_OK;
@@ -182,28 +188,26 @@ RC readBlock (int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage) {
 
 	FILE *fp;
 
-	SM_mgmtInfo *recieveInfo=(SM_mgmtInfo *)malloc(sizeof(SM_mgmtInfo));
-
+	SM_mgmtInfo *recieveInfo;
 	recieveInfo=fHandle->mgmtInfo;
 
 	fp=recieveInfo->fp;
 
 	//compare pagesNum and totalpages
-	int filePages=fHandle.totalNumPages;
-	int curPage=fHandle.curPagePos;
+	int filePages=fHandle->totalNumPages;
 
-	if(pageNum>filePages) {
+	if(pageNum >= filePages || pageNum < 0) {
 
 		return RC_READ_NON_EXISTING_PAGE;
 	}
 
 	//set the offset before reading
-	fseek(fp, META_SIZE+curPage*PAGESIZE, SEEK_SET);
+	fseek(fp, META_SIZE+pageNum*PAGE_SIZE, SEEK_SET);
+
+	fHandle->curPagePos=pageNum;
 
 	//read the content into memory
-	fread(memPage, 1, PAGESIZE, fp);
-
-	free(recieveInfo);
+	fread(memPage, 1, PAGE_SIZE, fp);
 
 	close(fp);
 
@@ -219,61 +223,51 @@ int getBlockPos (SM_FileHandle *fHandle){
 
 
 RC readFirstBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
-	fHandle->curPagePos=0;
 
-	readBlock(fHandle->curPagePos, fHandle, memPage);
+	return readBlock(0, fHandle, memPage);
 
-	return RC_OK;	
 }
 
 
 RC readPreviousBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 
-	if (fHandle.curPagePos=0){
+	if (fHandle->curPagePos==0){
 		return RC_READ_NON_EXISTING_PAGE;
 	}
 
 
-	fHandle->curPagePos--;
+	int pageNumber=fHandle->curPagePos-1;
 
-	readBlock(fHandle->curPagePos, fHandle, memPage);
-
-	return RC_OK;	
+	return readBlock(pageNumber, fHandle, memPage);
 
 }
 
 
 RC readCurrentBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 
-	readBlock(fHandle->curPagePos, fHandle, memPage);
+	return readBlock(fHandle->curPagePos, fHandle, memPage);
 
-	return RC_OK;	
 }
 
 
 RC readNextBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 
 
-	if(fHandle.curPagePos->fHandle.totalNumPages-1){
+	if(fHandle->curPagePos==fHandle->totalNumPages-1){
 		return RC_READ_NON_EXISTING_PAGE;
 	}
 
-	fHandle->curPagePos++;
+	int pageNumber=fHandle->curPagePos+1;
 
-	readBlock(fHandle->curPagePos, fHandle, memPage);
+	return readBlock(pageNumber, fHandle, memPage);
 
-	return RC_OK;	
 }
 
 
 
 RC readLastBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 
-	fHandle->curPagePos=fHandle->totalNumPages-1;
-
-	readBlock(fHandle->curPagePos, fHandle, memPage);
-
-	return RC_OK;	
+	return readBlock(fHandle->totalNumPages-1, fHandle, memPage);
 
 }
 
@@ -282,17 +276,26 @@ RC writeBlock (int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage){
 
 	FILE *fp;
 
-	SM_mgmtInfo *recieveInfo=(SM_mgmtInfo *)malloc(sizeof(SM_mgmtInfo));
+	SM_mgmtInfo *recieveInfo;
 
 	recieveInfo=fHandle->mgmtInfo;
 
 	fp=recieveInfo->fp;
 
-	offset=META_SIZE+pageNum*PAGESIZE;
+	//compare pagesNum and totalpages
+	int filePages=fHandle->totalNumPages;
+
+	if(pageNum >= filePages || pageNum < 0) {
+
+		return RC_READ_NON_EXISTING_PAGE;
+	}
+
+
+	int offset=META_SIZE+pageNum*PAGE_SIZE;
 
 	fseek(fp, offset, SEEK_SET);
 
-	fwrite(memPage, 1, PAGESIZE, fp);
+	fwrite(memPage, 1, PAGE_SIZE, fp);
 
 	return RC_OK;	
 }
@@ -300,32 +303,31 @@ RC writeBlock (int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage){
 
 RC writeCurrentBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 
-	writeBlock(fHandle->curPagePos, fHandle, memPage);
-
-	return RC_OK;
+	return writeBlock(fHandle->curPagePos, fHandle, memPage);
 
 }
 
 
 RC appendEmptyBlock (SM_FileHandle *fHandle){
 
-	char *newpage=(char *)malloc(PAGESIZE);
+	//malloc memory
+	char *newpage=(char *)malloc(PAGE_SIZE);
 
-	memset(newpage, '\0', PAGESIZE);
+	memset(newpage, '\0', PAGE_SIZE);
 
 	FILE *fp;
 
-	SM_mgmtInfo *recieveInfo=(SM_mgmtInfo *)malloc(sizeof(SM_mgmtInfo));
+	SM_mgmtInfo *recieveInfo;
 
 	recieveInfo=fHandle->mgmtInfo;
 
 	fp=recieveInfo->fp;
 
-	offset=META_SIZE+fHandle->totalNumPages*PAGESIZE;
+	int offset=META_SIZE+fHandle->totalNumPages*PAGE_SIZE;
 
 	fseek(fp, offset, SEEK_SET);
 
-	fwrite(newpage, 1, PAGESIZE, fp);
+	fwrite(newpage, 1, PAGE_SIZE, fp);
 
 	free(newpage);
 
@@ -338,7 +340,7 @@ RC ensureCapacity (int numberOfPages, SM_FileHandle *fHandle){
 
 	FILE *fp;
 
-	SM_mgmtInfo *recieveInfo=(SM_mgmtInfo *)malloc(sizeof(SM_mgmtInfo));
+	SM_mgmtInfo *recieveInfo;
 
 	recieveInfo=fHandle->mgmtInfo;
 
@@ -348,10 +350,12 @@ RC ensureCapacity (int numberOfPages, SM_FileHandle *fHandle){
 
 	int diff=numberOfPages-totalPage;
 
-	if(diff<0)
+	if(diff<=0)
 	{
 		return RC_OK;
 	}
+
+	int i;
 
 	for (i=0;i<diff;i++) {
 		appendEmptyBlock(fHandle);
