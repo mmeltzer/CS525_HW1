@@ -1,3 +1,10 @@
+Personnel: Marty Meltzer, Guoxuan Hao, Sachet Misra, Manojkumar Gaddam
+
+File list: dberror.c, dberror.h, makefile. storage_mgr.c, storage_mgr.h, test_assign1_1.c, test_helper.h
+
+Installation: Go to the path where the files are present, then enter the following command: make -f makefile
+
+
 The main objectives of our solution are to create a file, open a file, read the file, and write the file. Files are created
 using the createPageFile() method after the storage manager has been initialized. In this method, a file pointer object
 is declared, and a block of memory is created to store one page of the file, and meta data. The content of this memory is
