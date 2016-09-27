@@ -1,6 +1,6 @@
 Personnel: Marty Meltzer, Guoxuan Hao, Sachet Misra, Manojkumar Gaddam
 
-File list: dberror.c, dberror.h, makefile. storage_mgr.c, storage_mgr.h, test_assign1_1.c, test_helper.h
+File list: dberror.c, dberror.h, makefile. storage_mgr.c, storage_mgr.h, test_assign1_1.c, test_helper.h, makefile
 
 Installation: Go to the path where the files are present, then enter the following command: make -f makefile
 
